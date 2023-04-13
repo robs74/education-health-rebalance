@@ -1,0 +1,84 @@
+include("include/SOVIETInstructions.txt");
+
+defineVariable(StatRecord, record);
+defineVariable(int, population);
+defineVariable(int, i);
+defineVariable(int, j);
+defineVariable(Person, person);
+defineVariable(int, rnd);
+defineVariable(int, day);
+defineVariable(int, year);
+
+defineVariable(float, SEASONAL_DISEASES_STRENGTH);
+defineVariable(int, max_sick);
+defineVariable(int, rnd_sick_no);
+defineVariable(int, rnd_sick);
+
+defineFunction(main, void)
+{
+	InitConstants();
+	SEASONAL_DISEASES_STRENGTH = 0.02;
+	while(1 ? 1)
+	{
+		record.GetFromPresentToDate_DMY(1, 1, 1800);
+		population = record.Citizens_Born + record.Citizens_ImigrantSoviet * 2 + record.Citizens_ImigrantAfrica * 2 - record.Citizens_Dead - record.Citizens_Escaped + 500; //doubling immigrants to take their initial children into account, add 500 to take people from other sources not listed anywhere (e.g. tourists and foreign workers at customs offices)
+		for(i=0, i < population, i=i+1)
+		{
+			//children have to go to school until they turn 18
+			person.GetDataByIndex(i);
+			if(person.fAge < 18.0 & person.fEducation > 0.9)
+			{
+				Person_SetEducation(i, 0.9);
+			}
+			//university students can't graduate until they turn 21
+			if(person.fAge < 21.0 & person.fEducation > 1.9 & person.fEducation < 2.0)
+			{
+				Person_SetEducation(i, 1.9);
+			}
+			//seriously ill patients stay at hospital much longer
+			if(person.fStatusHealth < 0.2)
+			{
+				Random(rnd);
+				rnd = rnd % 10;
+				if(rnd < 9 & person.fStatusHealth > 0.1)
+				{
+					Person_SetStatus(i, PERSON_STATUS_HEALTH, 0.1);
+				}
+			}
+		}
+		//seasonal diseases
+		Date_GetCurrentDate_D365Y(day, year);
+		//the additional probability of getting ill starts increasing in October, reaches maximum in January and then decreases until April
+		max_sick = 0;
+		if(day > 270)
+		{
+			max_sick = (day-270) * population * SEASONAL_DISEASES_STRENGTH / 95.0;
+		}
+		elseif (day < 95)
+		{
+			max_sick = (95-day) * population * SEASONAL_DISEASES_STRENGTH / 95.0;
+		}
+		if(max_sick > 0)
+		{
+			Random(rnd_sick_no);
+			rnd_sick_no = rnd_sick_no % max_sick;
+			for(j=0, j<rnd_sick_no, j=j+1)
+			{
+				Random(rnd_sick);
+				rnd_sick = rnd_sick % population;
+				person.GetDataByIndex(rnd_sick);
+				if(person.fStatusHealth > 0.45)
+				{
+					Person_SetStatus(rnd_sick, PERSON_STATUS_HEALTH, 0.45);
+				}
+			}
+		}
+		Objectives_ClearAll();
+		//show the internal supply and demand for services
+		Objectives_CreateNewString("seasonal", "Seasonal disease");
+		Objective_AddRequirement("seasonal", max_sick * 1.0, "services_icon.png");
+		Objective_UpdateRequirement("seasonal", 0, rnd_sick_no * 1.0);
+		Script_Sleep(9.5);
+	}
+	end();
+}

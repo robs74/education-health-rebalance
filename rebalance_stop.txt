@@ -1,0 +1,12 @@
+include("include/SOVIETInstructions.txt");
+defineVariable(char, script);
+
+defineFunction(main, void)
+{
+	Script_Exists("rebalance.txt", script);
+	if(script ? 1)
+	{
+		Script_DestroyByName("rebalance.txt");
+	}
+	end();
+}
