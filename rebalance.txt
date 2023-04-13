@@ -73,11 +73,6 @@ defineFunction(main, void)
 				}
 			}
 		}
-		Objectives_ClearAll();
-		//show the internal supply and demand for services
-		Objectives_CreateNewString("seasonal", "Seasonal disease");
-		Objective_AddRequirement("seasonal", max_sick * 1.0, "services_icon.png");
-		Objective_UpdateRequirement("seasonal", 0, rnd_sick_no * 1.0);
 		Script_Sleep(9.5);
 	}
 	end();
