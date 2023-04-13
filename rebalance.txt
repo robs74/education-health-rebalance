@@ -26,7 +26,7 @@ defineFunction(main, void)
 		{
 			//children have to go to school until they turn 18
 			person.GetDataByIndex(i);
-			if(person.fAge < 18.0 & person.fEducation > 0.9)
+			if(person.fAge < 18.0 & person.fEducation > 0.9 & person.fEducation < 1.0)
 			{
 				Person_SetEducation(i, 0.9);
 			}
