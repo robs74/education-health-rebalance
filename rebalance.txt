@@ -30,8 +30,8 @@ defineFunction(main, void)
 			{
 				Person_SetEducation(i, 0.9);
 			}
-			//university students can't graduate until they turn 21
-			if(person.fAge < 21.0 & person.fEducation > 1.9 & person.fEducation < 2.0)
+			//university students can't graduate until they turn 20
+			if(person.fAge < 20.0 & person.fEducation > 1.9 & person.fEducation < 2.0)
 			{
 				Person_SetEducation(i, 1.9);
 			}
