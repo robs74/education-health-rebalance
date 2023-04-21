@@ -14,7 +14,7 @@ defineFunction(InitSettings, void)
 	INSTANT_EFFECT = 0; //sends children back to school even if they already have primary education (similarly for students), set it to 1 to observe the effect on education more quickly, if set to 1 it breaks the game with the simple education simulation setting (i.e. without schools and kindergartens)
 	
 	HOSPITAL_PROB_DENOMINATOR = 100; //the probability that a seriously ill patient stays at the hospital for another check is 90 over this (the probability and thus the mean time of stay will decrease the more you increase this number, set it to 90 or less to disable the feature)
-	SEASONAL_DISEASES_STRENGTH = 0.02; //set it to 0.0 or less to disable them completely
+	SEASONAL_DISEASES_STRENGTH = 0.005; //set it to 0.0 or less to disable them completely
 	
 	returnVoid();
 }
