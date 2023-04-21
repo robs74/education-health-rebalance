@@ -1,0 +1,20 @@
+defineVariable(float, SCHOOL_AGE);
+defineVariable(float, UNIVERSITY_AGE);
+defineVariable(char, INSTANT_EFFECT);
+defineVariable(int, HOSPITAL_PROB_DENOMINATOR);
+defineVariable(float, SEASONAL_DISEASES_STRENGTH);
+
+defineFunction(InitSettings, void)
+{
+	//you can modify the following values to enable or disable features or change the balance, making the game harder or easier
+	//please keep at least one digit after the decimal point if present
+	
+	SCHOOL_AGE = 18.0; //children have to go to school until they are older than this many years (set it to 0.0 or less to disable the feature)
+	UNIVERSITY_AGE = 20.0; //university students cannot graduate until they are older than this many years (set it to 0.0 or less to disable the feature, you cannot increase it more than 20.5 without breaking the game)
+	INSTANT_EFFECT = 0; //sends children back to school even if they already have primary education (similarly for students), set it to 1 to observe the effect on education more quickly, if set to 1 it breaks the game with the simple education simulation setting (i.e. without schools and kindergartens)
+	
+	HOSPITAL_PROB_DENOMINATOR = 100; //the probability that a seriously ill patient stays at the hospital for another check is 90 over this (the probability and thus the mean time of stay will decrease the more you increase this number, set it to 90 or less to disable the feature)
+	SEASONAL_DISEASES_STRENGTH = 0.02; //set it to 0.0 or less to disable them completely
+	
+	returnVoid();
+}

@@ -1,4 +1,5 @@
 include("include/SOVIETInstructions.txt");
+include("settings.txt");
 
 defineVariable(StatRecord, record);
 defineVariable(int, population);
@@ -9,40 +10,56 @@ defineVariable(int, rnd);
 defineVariable(int, day);
 defineVariable(int, year);
 
-defineVariable(float, SEASONAL_DISEASES_STRENGTH);
 defineVariable(int, max_sick);
 defineVariable(int, rnd_sick_no);
 defineVariable(int, rnd_sick);
 
+defineFunction(Clamp, float, float:x, float:y, float:z)
+{
+    if (x < y)
+	{
+        x = y;
+    }
+	elseif(x > z) {
+		x = z;
+	}
+	return(x);
+}
+
 defineFunction(main, void)
 {
 	InitConstants();
-	SEASONAL_DISEASES_STRENGTH = 0.02;
+	InitSettings();
+	//check correctness of the constants in the settings file
+	SCHOOL_AGE = Clamp(SCHOOL_AGE, 0.0, 20.5);
+	UNIVERSITY_AGE = Clamp(UNIVERSITY_AGE, 0.0, 20.5);
+	SEASONAL_DISEASES_STRENGTH = Clamp(SEASONAL_DISEASES_STRENGTH, 0.0, 1.0);
 	while(1 ? 1)
 	{
 		record.GetFromPresentToDate_DMY(1, 1, 1800);
 		population = record.Citizens_Born + record.Citizens_ImigrantSoviet * 2 + record.Citizens_ImigrantAfrica * 2 - record.Citizens_Dead - record.Citizens_Escaped + 500; //doubling immigrants to take their initial children into account, add 500 to take people from other sources not listed anywhere (e.g. tourists and foreign workers at customs offices)
+		Script_EnterCriticalSection();
 		for(i=0, i < population, i=i+1)
 		{
-			//children have to go to school until they turn 18
+			//children have to go to school until they are SCHOOL_AGE years old
 			person.GetDataByIndex(i);
-			if(person.fAge < 18.0 & person.fEducation > 0.9 & person.fEducation < 1.0)
+			if(person.fAge < SCHOOL_AGE & person.fEducation > 0.9 & (person.fEducation < 1.0 | INSTANT_EFFECT ? 1))
 			{
 				Person_SetEducation(i, 0.9);
 			}
-			//university students can't graduate until they turn 20
-			if(person.fAge < 20.0 & person.fEducation > 1.9 & person.fEducation < 2.0)
+			//university students can't graduate until they are UNIVERSITY_AGE years old
+			if(person.fAge < UNIVERSITY_AGE & person.fEducation > 1.9 & (person.fEducation < 2.0 | INSTANT_EFFECT ? 1))
 			{
 				Person_SetEducation(i, 1.9);
 			}
-			//seriously ill patients stay at hospital much longer
-			if(person.fStatusHealth < 0.2)
+			//seriously ill patients stay at hospital longer
+			if(person.fStatusHealth < 0.2 & HOSPITAL_PROB_DENOMINATOR > 90)
 			{
 				Random(rnd);
-				rnd = rnd % 10;
-				if(rnd < 9 & person.fStatusHealth > 0.1)
+				rnd = rnd % HOSPITAL_PROB_DENOMINATOR;
+				if(rnd < 90 & person.fStatusHealth > 0.15)
 				{
-					Person_SetStatus(i, PERSON_STATUS_HEALTH, 0.1);
+					Person_SetStatus(i, PERSON_STATUS_HEALTH, 0.15);
 				}
 			}
 		}
@@ -73,6 +90,7 @@ defineFunction(main, void)
 				}
 			}
 		}
+		Script_LeaveCriticalSection();
 		Script_Sleep(9.5);
 	}
 	end();
