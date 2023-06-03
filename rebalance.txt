@@ -5,6 +5,7 @@ defineVariable(int, population);
 defineVariable(int, n);
 defineVariable(int, i);
 defineVariable(int, j);
+defineVariable(int, k);
 defineVariable(Person, person);
 defineVariable(Building, building);
 defineVariable(int, rnd);
@@ -14,6 +15,8 @@ defineVariable(int, year);
 defineVariable(int, max_sick);
 defineVariable(int, rnd_sick_no);
 defineVariable(int, rnd_sick);
+defineVariable(int, population_rnd);
+defineVariable(int, rnd_sick2);
 
 defineFunction(Clamp, float, float:x, float:y, float:z)
 {
@@ -43,7 +46,7 @@ defineFunction(main, void)
 		for(i=0, i < n, i=i+1)
 		{
 			building.GetDataByIndex(i);
-			if(building.nType ? BUILDINGTYPE_LIVING)
+			if(building.nType ? BUILDINGTYPE_LIVING & building.fPercFinished ? 1.0)
 			{
 				population = population + building.nWorkersNum;
 			}
@@ -90,12 +93,21 @@ defineFunction(main, void)
 			rnd_sick_no = rnd_sick_no % max_sick;
 			for(j=0, j<rnd_sick_no, j=j+1)
 			{
-				Random(rnd_sick);
-				rnd_sick = rnd_sick % population;
-				person.GetDataByIndex(rnd_sick);
-				if(person.fStatusHealth > 0.45)
+				//Random range is 2^15 (=32,768) and it's quite easy to have a population exceeding this number, we therefore divide the population by 2^15, assing the value to population_rnd and sum 2*population_rnd + 1 random integers and finally ensure that this number stays withing the correct range.
+				//Notice that if we summed only sum population_rnd random integers, then workers with higher indices would have a smaller chance to be chosen. Indeed, assume that we have a population of 50,000. We sum two random integers resulting in a random integer in the range [0, 65536]. By using the modulo operation, the first 15536 workers have double chances to be chosen. We multiply by 2 and add 1 to make the issue less noticeable (but the distribution still remains nonuniform in general).
+				Random(rnd_sick2);
+				rnd_sick = rnd_sick2;
+				population_rnd = population / 2^15;
+				for(k = 0, k < 2 * population_rnd + 1, k = k + 1)
 				{
-					Person_SetStatus(rnd_sick, PERSON_STATUS_HEALTH, 0.45);
+					Random(rnd_sick2);
+					rnd_sick = rnd_sick + rnd_sick2;
+				}
+				rnd_sick = (2 * rnd_sick2) % population; 
+				person.GetDataByIndex(rnd_sick);
+				if(person.fStatusHealth > SEASONAL_DISEASES_HEALTH)
+				{
+					Person_SetStatus(rnd_sick, PERSON_STATUS_HEALTH, SEASONAL_DISEASES_HEALTH);
 				}
 			}
 		}
