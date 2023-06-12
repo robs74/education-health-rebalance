@@ -46,7 +46,7 @@ defineFunction(main, void)
 		for(i=0, i < n, i=i+1)
 		{
 			building.GetDataByIndex(i);
-			if(building.nType ? BUILDINGTYPE_LIVING & building.fPercFinished ? 1.0)
+			if(building.nType ? BUILDINGTYPE_LIVING & building.fPercFinished > 0.9999)
 			{
 				population = population + building.nWorkersNum;
 			}
