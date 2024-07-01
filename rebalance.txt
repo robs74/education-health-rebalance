@@ -20,6 +20,8 @@ defineVariable(int, rnd_sick2);
 defineVariable(float, game_time);
 defineVariable(float, game_time_prev);
 
+defineVariable(GameSetting, game);
+
 defineFunction(Clamp, float, float:x, float:y, float:z)
 {
     if (x < y)
@@ -44,20 +46,22 @@ defineFunction(main, void)
 	Script_GetGameTime(game_time_prev);
 	while(1 ? 1)
 	{
+		game.GetCurrentGameSettigns();
 		Script_EnterCriticalSection();
 		Script_GetGameTime(game_time);
 		Building_GetNumberOfBuildings(n);
 		Person_GetNumberOfPeople(population);
+		
 		for(i=0, i < population, i=i+1)
 		{
 			//children have to go to school until they are SCHOOL_AGE years old
 			person.GetDataByIndex(i);
-			if(person.fAge < SCHOOL_AGE & person.fEducation > 0.9 & (person.fEducation < 1.0 | INSTANT_EFFECT ? 1))
+			if(person.fAge < SCHOOL_AGE & person.fEducation > 0.9 & (person.fEducation < 1.0 | INSTANT_EFFECT ? 1) & game.EducationLevel ? 0)
 			{
 				Person_SetEducation(i, 0.9);
 			}
 			//university students can't graduate until they are UNIVERSITY_AGE years old
-			if(person.fAge < UNIVERSITY_AGE & person.fEducation > 1.9 & (person.fEducation < 2.0 | INSTANT_EFFECT ? 1))
+			if(person.fAge < UNIVERSITY_AGE & person.fEducation > 1.9 & (person.fEducation < 2.0 | INSTANT_EFFECT ? 1) & game.EducationLevel ? 0)
 			{
 				Person_SetEducation(i, 1.9);
 			}
@@ -90,7 +94,7 @@ defineFunction(main, void)
 			rnd_sick_no = rnd_sick_no % max_sick;
 			for(j=0, j<rnd_sick_no, j=j+1)
 			{
-				//Random range is 2^15 (=32,768) and it's quite easy to have a population exceeding this number, we therefore divide the population by 2^15, assing the value to population_rnd and sum 2*population_rnd + 1 random integers and finally ensure that this number stays withing the correct range.
+				//Random range is 2^15 (=32,768) and it's quite easy to have a population exceeding this number, we therefore divide the population by 2^15, assign the value to population_rnd and sum 2*population_rnd + 1 random integers and finally ensure that this number stays withing the correct range.
 				//Notice that if we summed only sum population_rnd random integers, then workers with higher indices would have a smaller chance to be chosen. Indeed, assume that we have a population of 50,000. We sum two random integers resulting in a random integer in the range [0, 65536]. By using the modulo operation, the first 15536 workers have double chances to be chosen. We multiply by 2 and add 1 to make the issue less noticeable (but the distribution still remains nonuniform in general).
 				Random(rnd_sick2);
 				rnd_sick = rnd_sick2;
@@ -110,7 +114,7 @@ defineFunction(main, void)
 		}
 		game_time_prev = game_time;
 		Script_LeaveCriticalSection();
-		Script_Sleep(9.5);
+		Script_Sleep(4.5);
 	}
 	end();
 }
