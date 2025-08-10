@@ -15,10 +15,18 @@ defineVariable(int, year);
 defineVariable(int, max_sick);
 defineVariable(int, rnd_sick_no);
 defineVariable(int, rnd_sick);
-defineVariable(int, population_rnd);
-defineVariable(int, rnd_sick2);
+//defineVariable(int, rnd_sick2);
+//defineVariable(int, population_rnd);
+defineVariable(int, rnd_sick_in_a_building);
+defineVariable(int, rnd_building_id);
+defineVariable(int, infected_in_a_building);
+defineVariable(int, infected_total);
 defineVariable(float, game_time);
 defineVariable(float, game_time_prev);
+
+defineVariable(int, worker_id);
+defineVariable(Person, worker);
+defineVariable(int, is_active);
 
 defineVariable(GameSetting, game);
 
@@ -51,7 +59,6 @@ defineFunction(main, void)
 		Script_GetGameTime(game_time);
 		Building_GetNumberOfBuildings(n);
 		Person_GetNumberOfPeople(population);
-		
 		for(i=0, i < population, i=i+1)
 		{
 			//children have to go to school until they are SCHOOL_AGE years old
@@ -80,6 +87,7 @@ defineFunction(main, void)
 		Date_GetCurrentDate_D365Y(day, year);
 		//the additional probability of getting ill starts increasing in October, reaches maximum in January and then decreases until April
 		max_sick = 0;
+		infected_total = 0;
 		if(day > 270)
 		{
 			max_sick = (day-270) * population * SEASONAL_DISEASES_STRENGTH / 95.0;
@@ -92,6 +100,7 @@ defineFunction(main, void)
 		{
 			Random(rnd_sick_no);
 			rnd_sick_no = rnd_sick_no % max_sick;
+			/*
 			for(j=0, j<rnd_sick_no, j=j+1)
 			{
 				//Random range is 2^15 (=32,768) and it's quite easy to have a population exceeding this number, we therefore divide the population by 2^15, assign the value to population_rnd and sum 2*population_rnd + 1 random integers and finally ensure that this number stays withing the correct range.
@@ -109,6 +118,42 @@ defineFunction(main, void)
 				if(person.fStatusHealth > SEASONAL_DISEASES_HEALTH)
 				{
 					Person_SetStatus(rnd_sick, PERSON_STATUS_HEALTH, SEASONAL_DISEASES_HEALTH);
+				}
+			}
+			*/
+			while(infected_total < rnd_sick_no)
+			{
+				infected_in_a_building = 0;
+				Random(rnd_building_id);
+				rnd_building_id = rnd_building_id % n;
+				building.GetDataByIndex(rnd_building_id);
+				Building_IsOldTownActive(rnd_building_id, is_active);
+				is_active = is_active * is_active; //don't care if old town or not
+				Random(rnd_sick_in_a_building);
+				rnd_sick_in_a_building = rnd_sick_in_a_building % 10;
+				rnd_sick_in_a_building = rnd_sick_in_a_building + 1; //1-10 workers per building
+				rnd_sick_in_a_building = rnd_sick_in_a_building % building.nWorkersNum; //no more than the number of workers currently in the building
+				infected_total = infected_total + rnd_sick_in_a_building;
+				while(infected_in_a_building < rnd_sick_in_a_building)
+				{
+					infected_in_a_building = infected_in_a_building + 1;
+					Random(rnd_sick);
+					rnd_sick = rnd_sick_in_a_building % building.nWorkersNum;
+					Building_Workers_GetID(rnd_building_id, rnd_sick, worker_id);
+					person.GetDataByIndex(worker_id);
+					if(person.nValidRead ? 1 & person.fStatusHealth > SEASONAL_DISEASES_HEALTH & is_active ? 1)
+					{
+						Person_SetStatus(worker_id, PERSON_STATUS_HEALTH, SEASONAL_DISEASES_HEALTH);
+					}
+				}
+			}
+			for(i=0, i>n, i=i+1)
+			{
+				building.GetDataByIndex(i);
+				if(building.nType ? BUILDINGTYPE_LIVING & building.fPercFinished > 0.9999)
+				{
+					Building_IsOldTownActive(i, is_active);
+					population = population + is_active * is_active * building.nWorkersNum;
 				}
 			}
 		}
